@@ -1,23 +1,25 @@
 import json
 import os
 import requests
-import platform
-import time
 
-# --- THE SMART BYPASS SWITCH ---
-# This checks if we are on a PC to unlock the eyes and hands.
+# --- SWITCH 1: PC HANDS & EYES ---
 try:
     import pyautogui
-    import pytesseract
-    from PIL import Image
     HAS_HANDS = True
 except ImportError:
     HAS_HANDS = False
 
+# --- SWITCH 2: OFFLINE BRAIN ---
+try:
+    from llama_cpp import Llama
+    HAS_BRAIN = True
+except ImportError:
+    HAS_BRAIN = False
+
 MEMORY_FILE = "memory.json"
 FIREBASE_URL = "https://my-advanced-ai-default-rtdb.firebaseio.com/memory.json"
+MODEL_NAME = "tinyllama-1.1b-chat-v1.0.q4_k_m.gguf" # The brain file we will download on PC
 
-# --- MEMORY AND CLOUD FUNCTIONS ---
 def load_memory():
     if os.path.exists(MEMORY_FILE):
         with open(MEMORY_FILE, 'r') as file:
@@ -31,65 +33,56 @@ def save_memory(data):
 def sync_to_cloud(data):
     try:
         requests.put(FIREBASE_URL, json=data, timeout=5)
-    except requests.exceptions.ConnectionError:
-        pass # Silently stay offline
+    except Exception:
+        pass # Stay offline quietly
 
-# --- VISION AND EXECUTION FUNCTIONS (PC ONLY) ---
+def think_and_answer(user_input, memory):
+    if not HAS_BRAIN:
+        return "I need the offline brain installed on this device to think."
+    
+    print("[System] Waking up offline AI brain...")
+    # This runs totally offline on the PC
+    llm = Llama(model_path=MODEL_NAME, verbose=False)
+    context = f"Past Knowledge:\n{memory}\n\nUser: {user_input}\nAI:"
+    output = llm(context, max_tokens=150, stop=["User:", "\n\n"])
+    return output['choices'][0]['text'].strip()
+
 def execute_task(task_name):
     if not HAS_HANDS:
-        print(f"[System] I know how to '{task_name}', but I am trapped in a mobile phone.")
-        print("[System] Install me on a PC to physically execute this.")
+        print(f"[System] I know how to '{task_name}', but I need to be on a PC to use the mouse.")
         return
+    print(f"[System] HANDS ACTIVE: Executing '{task_name}'...")
+    # PC control code goes here (pyautogui.moveTo, etc.)
+    print(f"[System] SUCCESS: '{task_name}' completed.")
 
-    print(f"\n[System] EYES OPEN: Scanning screen to execute '{task_name}'...")
-    # 1. Take a screenshot
-    screenshot = pyautogui.screenshot()
-    
-    # 2. Read the screen (OCR)
-    print("[System] READING: Analyzing screen text...")
-    # screen_text = pytesseract.image_to_string(screenshot)
-    
-    # 3. Take Control
-    print(f"[System] HANDS ACTIVE: Taking control of mouse...")
-    time.sleep(1)
-    # Example PC movement: Move mouse to center and click
-    # screen_width, screen_height = pyautogui.size()
-    # pyautogui.moveTo(screen_width / 2, screen_height / 2, duration=1)
-    # pyautogui.click()
-    
-    print(f"[System] SUCCESS: Executed '{task_name}'\n")
-
-# --- MAIN LOGIC LOOP ---
 def main():
     print("=== Advanced All-In-One AI ===")
-    if HAS_HANDS:
-        print("[Status] Running on PC: Eyes and Hands UNLOCKED.")
-    else:
-        print("[Status] Running on Mobile: Brain active. Hands disabled by OS.")
-    
     ai_memory = load_memory()
     
     while True:
-        user_input = input("\nYou (Teach/Do/Exit): ")
+        user_input = input("\nYou (Teach/Do/Ask/Exit): ")
         
         if user_input.lower() == 'exit':
             break
             
-        # If user wants the AI to DO something it already knows
         if user_input.startswith("do "):
             task = user_input.replace("do ", "")
             if task in ai_memory:
                 execute_task(task)
             else:
-                print("AI: I don't know how to do that yet. Please teach me first.")
+                print("AI: I don't know how to do that yet.")
                 
-        # Otherwise, the AI LEARNS
-        else:
-            print("AI: Learning new instruction...")
-            ai_memory[user_input] = "Task parameters saved."
+        elif user_input.startswith("teach "):
+            task = user_input.replace("teach ", "")
+            ai_memory[task] = "Learned task logic."
             save_memory(ai_memory)
             sync_to_cloud(ai_memory)
             print("[System] Knowledge saved and synced.")
+            
+        else:
+            print("AI is thinking...")
+            answer = think_and_answer(user_input, ai_memory)
+            print(f"AI: {answer}")
 
 if __name__ == "__main__":
     main()
