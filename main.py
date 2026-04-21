@@ -1,32 +1,23 @@
 import json
 import os
 import requests
-import sys
+import google.generativeai as genai
 import traceback
 
-# --- SWITCH 1: PC HANDS & EYES ---
+# --- SWITCH 1: PC HANDS ---
 try:
     import pyautogui
     HAS_HANDS = True
 except Exception:
     HAS_HANDS = False
 
-# --- SWITCH 2: OFFLINE BRAIN ---
-try:
-    from llama_cpp import Llama
-    HAS_BRAIN = True
-except Exception:
-    HAS_BRAIN = False
+# --- CLOUD BRAIN SETUP ---
+API_KEY = "AIzaSyB8fbSHc59soaFex7xmk7nZp1ZAPcD6yyU"  # <--- PASTE YOUR KEY HERE
+genai.configure(api_key=API_KEY)
+model = genai.GenerativeModel('gemini-2.5-flash') 
 
 MEMORY_FILE = "memory.json"
 FIREBASE_URL = "https://my-advanced-ai-default-rtdb.firebaseio.com/memory.json"
-MODEL_NAME = "tinyllama-1.1b-chat-v1.0.q4_k_m.gguf"
-
-# --- FIND THE HIDDEN BRAIN INSIDE THE .EXE ---
-def get_brain_path():
-    if hasattr(sys, '_MEIPASS'):
-        return os.path.join(sys._MEIPASS, MODEL_NAME)
-    return MODEL_NAME
 
 def load_memory():
     if os.path.exists(MEMORY_FILE):
@@ -45,18 +36,13 @@ def sync_to_cloud(data):
         pass 
 
 def think_and_answer(user_input, memory):
-    if not HAS_BRAIN:
-        return "I need the offline brain installed on this device to think."
-    
-    print("[System] Waking up offline AI brain...")
-    # Using the new path tool here
+    print("[System] Beaming question to cloud supercomputer...")
     try:
-        llm = Llama(model_path=get_brain_path(), verbose=False)
         context = f"Past Knowledge:\n{memory}\n\nUser: {user_input}\nAI:"
-        output = llm(context, max_tokens=150, stop=["User:", "\n\n"])
-        return output['choices'][0]['text'].strip()
+        response = model.generate_content(context)
+        return response.text.strip()
     except Exception as e:
-        return f"BRAIN ERROR: {str(e)}"
+        return f"CLOUD ERROR: {str(e)}"
 
 def execute_task(task_name):
     if not HAS_HANDS:
@@ -66,7 +52,7 @@ def execute_task(task_name):
     print(f"[System] SUCCESS: '{task_name}' completed.")
 
 def main():
-    print("=== Advanced All-In-One AI ===")
+    print("=== Advanced Cloud AI (Lightweight) ===")
     ai_memory = load_memory()
     
     while True:
@@ -90,9 +76,8 @@ def main():
             print("[System] Knowledge saved and synced.")
             
         else:
-            print("AI is thinking...")
             answer = think_and_answer(user_input, ai_memory)
-            print(f"AI: {answer}")
+            print(f"\nAI: {answer}")
 
 if __name__ == "__main__":
     try:

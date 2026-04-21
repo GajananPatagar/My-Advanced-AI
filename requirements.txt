@@ -2,3 +2,4 @@ requests
 pyautogui
 llama-cpp-python
 pyinstaller
+google-generativeai
