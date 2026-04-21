@@ -2,6 +2,7 @@ import json
 import os
 import requests
 import sys
+import traceback
 
 # --- SWITCH 1: PC HANDS & EYES ---
 try:
@@ -21,7 +22,7 @@ MEMORY_FILE = "memory.json"
 FIREBASE_URL = "https://my-advanced-ai-default-rtdb.firebaseio.com/memory.json"
 MODEL_NAME = "tinyllama-1.1b-chat-v1.0.q4_k_m.gguf"
 
-# --- NEW: FIND THE HIDDEN BRAIN INSIDE THE .EXE ---
+# --- FIND THE HIDDEN BRAIN INSIDE THE .EXE ---
 def get_brain_path():
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, MODEL_NAME)
@@ -49,10 +50,13 @@ def think_and_answer(user_input, memory):
     
     print("[System] Waking up offline AI brain...")
     # Using the new path tool here
-    llm = Llama(model_path=get_brain_path(), verbose=False)
-    context = f"Past Knowledge:\n{memory}\n\nUser: {user_input}\nAI:"
-    output = llm(context, max_tokens=150, stop=["User:", "\n\n"])
-    return output['choices'][0]['text'].strip()
+    try:
+        llm = Llama(model_path=get_brain_path(), verbose=False)
+        context = f"Past Knowledge:\n{memory}\n\nUser: {user_input}\nAI:"
+        output = llm(context, max_tokens=150, stop=["User:", "\n\n"])
+        return output['choices'][0]['text'].strip()
+    except Exception as e:
+        return f"BRAIN ERROR: {str(e)}"
 
 def execute_task(task_name):
     if not HAS_HANDS:
@@ -91,4 +95,9 @@ def main():
             print(f"AI: {answer}")
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as e:
+        print("\n=== SYSTEM CRASH FAULT CODE ===")
+        traceback.print_exc()
+        input("\nPress ENTER to close the window...")
