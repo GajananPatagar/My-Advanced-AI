@@ -1,8 +1,9 @@
 import json
 import os
 import requests
+import sys
 
-# --- SWITCH 1: PC HANDS & EYES (BUG FIXED) ---
+# --- SWITCH 1: PC HANDS & EYES ---
 try:
     import pyautogui
     HAS_HANDS = True
@@ -19,6 +20,12 @@ except Exception:
 MEMORY_FILE = "memory.json"
 FIREBASE_URL = "https://my-advanced-ai-default-rtdb.firebaseio.com/memory.json"
 MODEL_NAME = "tinyllama-1.1b-chat-v1.0.q4_k_m.gguf"
+
+# --- NEW: FIND THE HIDDEN BRAIN INSIDE THE .EXE ---
+def get_brain_path():
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, MODEL_NAME)
+    return MODEL_NAME
 
 def load_memory():
     if os.path.exists(MEMORY_FILE):
@@ -41,7 +48,8 @@ def think_and_answer(user_input, memory):
         return "I need the offline brain installed on this device to think."
     
     print("[System] Waking up offline AI brain...")
-    llm = Llama(model_path=MODEL_NAME, verbose=False)
+    # Using the new path tool here
+    llm = Llama(model_path=get_brain_path(), verbose=False)
     context = f"Past Knowledge:\n{memory}\n\nUser: {user_input}\nAI:"
     output = llm(context, max_tokens=150, stop=["User:", "\n\n"])
     return output['choices'][0]['text'].strip()
