@@ -12,7 +12,7 @@ except Exception:
     HAS_HANDS = False
 
 # --- CLOUD BRAIN SETUP ---
-API_KEY = "AIzaSyB8fbSHc59soaFex7xmk7nZp1ZAPcD6yyU"  # <--- PASTE YOUR KEY HERE
+API_KEY = ""  # <--- PASTE YOUR KEY HERE
 genai.configure(api_key=API_KEY)
 model = genai.GenerativeModel('gemini-2.5-flash') 
 
