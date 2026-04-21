@@ -1,0 +1,4 @@
+requests
+pyautogui
+llama-cpp-python
+pyinstaller

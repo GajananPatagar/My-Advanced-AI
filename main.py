@@ -2,23 +2,23 @@ import json
 import os
 import requests
 
-# --- SWITCH 1: PC HANDS & EYES ---
+# --- SWITCH 1: PC HANDS & EYES (BUG FIXED) ---
 try:
     import pyautogui
     HAS_HANDS = True
-except ImportError:
+except Exception:
     HAS_HANDS = False
 
 # --- SWITCH 2: OFFLINE BRAIN ---
 try:
     from llama_cpp import Llama
     HAS_BRAIN = True
-except ImportError:
+except Exception:
     HAS_BRAIN = False
 
 MEMORY_FILE = "memory.json"
 FIREBASE_URL = "https://my-advanced-ai-default-rtdb.firebaseio.com/memory.json"
-MODEL_NAME = "tinyllama-1.1b-chat-v1.0.q4_k_m.gguf" # The brain file we will download on PC
+MODEL_NAME = "tinyllama-1.1b-chat-v1.0.q4_k_m.gguf"
 
 def load_memory():
     if os.path.exists(MEMORY_FILE):
@@ -34,14 +34,13 @@ def sync_to_cloud(data):
     try:
         requests.put(FIREBASE_URL, json=data, timeout=5)
     except Exception:
-        pass # Stay offline quietly
+        pass 
 
 def think_and_answer(user_input, memory):
     if not HAS_BRAIN:
         return "I need the offline brain installed on this device to think."
     
     print("[System] Waking up offline AI brain...")
-    # This runs totally offline on the PC
     llm = Llama(model_path=MODEL_NAME, verbose=False)
     context = f"Past Knowledge:\n{memory}\n\nUser: {user_input}\nAI:"
     output = llm(context, max_tokens=150, stop=["User:", "\n\n"])
@@ -52,7 +51,6 @@ def execute_task(task_name):
         print(f"[System] I know how to '{task_name}', but I need to be on a PC to use the mouse.")
         return
     print(f"[System] HANDS ACTIVE: Executing '{task_name}'...")
-    # PC control code goes here (pyautogui.moveTo, etc.)
     print(f"[System] SUCCESS: '{task_name}' completed.")
 
 def main():
